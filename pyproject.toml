@@ -23,6 +23,7 @@ pymongo = "^4.7.2"
 python-dotenv = "^1.0.1"
 pandas = "^2.2.2"
 dvc = "^3.51.0"
+dvc-s3 = "^3.2.0"
 
 
 [build-system]
