@@ -19,6 +19,9 @@ pytest = "^8.1.1"
 openmeteo-requests = "^1.2.0"
 requests-cache = "^1.2.0"
 retry-requests = "^2.0.0"
+pymongo = "^4.7.2"
+python-dotenv = "^1.0.1"
+pandas = "^2.2.2"
 
 
 [build-system]
