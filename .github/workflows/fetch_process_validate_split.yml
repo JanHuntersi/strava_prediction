@@ -1,0 +1,467 @@
+name: Fetch and process data every hour
+
+on:
+  schedule:
+    - cron: '0 21 * * *'
+  workflow_dispatch:
+
+env:
+  DVC_ACCESS_KEY_ID: ${{ secrets.DVC_ACCESS_KEY_ID }}
+  DVC_SECRET_ACCESS_KEY: ${{ secrets.DVC_SECRET_ACCESS_KEY }}
+
+jobs:
+
+  test_the_apis:
+    runs-on: ubuntu-20.04
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout respository
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.10.2
+
+      - name: cache poetry install
+        uses: actions/cache@v2
+        with:
+          path: ~/.local
+          key: poetry-1.8.2
+
+      - uses: snok/install-poetry@v1
+        with:
+          version: 1.8.2
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: cache deps
+        id: cache-deps
+        uses: actions/cache@v2
+        with:
+          path: .venv
+          key: pydeps-${{ hashFiles('**/poetry.lock') }}
+
+      - run: poetry install --no-interaction --no-root
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+
+      - run: poetry install --no-interaction
+
+      - name: Test APIs
+        run: |
+          poetry run python tests/test_weather_api.py          
+
+
+  fetch_strava_data:
+    needs: test_the_apis
+    runs-on: ubuntu-20.04
+    timeout-minutes: 20
+
+
+    outputs:
+      sha_new: ${{ steps.sha_new.outputs.SHA_NEW }}
+
+    permissions:
+      contents: write
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pypoetry
+          key: ${{ runner.os }}-poetry-${{ hashFiles('**/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-poetry-
+      
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.10.2
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          poetry --version
+
+      - run: poetry install --no-interaction --no-root
+        if: steps.cache-dependencies.outputs.cache-hit != 'true'
+      - name: Install dependencies
+        run: |
+          poetry install
+
+      - name: Install DVC
+        uses: iterative/setup-dvc@v1
+      
+      - name: Configure Dagshub
+        run: |
+          poetry run dvc remote modify origin endpointurl https://dagshub.com/JanHuntersi/strava_prediction.s3
+          poetry run dvc remote modify origin --local access_key_id $DVC_ACCESS_KEY_ID
+          poetry run dvc remote modify origin --local secret_access_key $DVC_SECRET_ACCESS_KEY
+
+      - name: DVC Pull Data
+        run: |
+          poetry run dvc pull -r origin
+      
+      - name: Fetch strava data
+        run: |
+          poetry run python src/data/fetch_strava.py
+          if [ $? -eq 0 ]; then
+            echo "fetch_strava.py executed successfully."
+          else
+            echo "Error executing fetch_strava.py"
+            exit 1
+          fi
+      
+      - name: Add data to DVC
+        run: |
+          poetry run dvc add data
+      
+      - name: DVC push
+        run: |
+          poetry run dvc push -r origin
+      
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "action: Fetch strava data from API" 
+          branch: main
+      
+      - name: Get commit SHA and store it in GITHUB_OUTPUT
+        id: sha_new
+        run: echo "SHA_NEW=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+
+
+  process_strava_data:
+    needs: fetch_strava_data
+    runs-on: ubuntu-20.04
+    timeout-minutes: 20
+    outputs:
+      sha_new: ${{ steps.sha_new.outputs.SHA_NEW }}
+    permissions:
+      contents: write
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        env:
+          SHA_NEW: ${{ needs.fetch_strava_data.outputs.sha_new }}
+        with:
+          ref: ${{ needs.fetch_strava_data.outputs.sha_new }}
+          fetch-depth: 0
+
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pypoetry
+          key: ${{ runner.os }}-poetry-${{ hashFiles('**/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-poetry-
+      
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.10.2
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          poetry --version
+
+      - run: poetry install --no-interaction --no-root
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+
+      - run: poetry install --no-interaction
+
+      - name: Install DVC
+        uses: iterative/setup-dvc@v1
+      
+      - name: Configure Dagshub
+        run: |
+          poetry run dvc remote modify origin endpointurl https://dagshub.com/JanHuntersi/strava_prediction.s3
+          poetry run dvc remote modify origin --local access_key_id $DVC_ACCESS_KEY_ID
+          poetry run dvc remote modify origin --local secret_access_key $DVC_SECRET_ACCESS_KEY
+
+      - name: DVC Pull Data
+        run: |
+          poetry run dvc pull -r origin
+      
+      - name: Process strava data
+        run: |
+          poetry run python src/data/preprocess_strava.py
+          if [ $? -eq 0 ]; then
+            echo "preprocess_strava.py executed successfully."
+          else
+            echo "Error executing preprocess_strava.py"
+            exit 1
+          fi
+      
+      - name: Add data to DVC
+        run: |
+          poetry run dvc add data
+      
+      - name: DVC push
+        run: |
+          poetry run dvc push -r origin
+      
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          branch: main
+          commit_message: "action: Preprocess Strava data" 
+          
+
+      - name: Get commit SHA and store it in GITHUB_OUTPUT
+        id: sha_new
+        run: echo "SHA_NEW=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+  fetch_weather_data:
+    needs: process_strava_data
+    runs-on: ubuntu-20.04
+    timeout-minutes: 20
+    outputs:
+      sha_new: ${{ steps.sha_new.outputs.SHA_NEW }}
+
+    permissions:
+      contents: write
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        env:
+          SHA_NEW: ${{ needs.process_strava_data.outputs.sha_new }}
+        with:
+          ref: ${{ needs.process_strava_data.outputs.sha_new }}
+          fetch-depth: 0
+
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pypoetry
+          key: ${{ runner.os }}-poetry-${{ hashFiles('**/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-poetry-
+      
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.10.2
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          poetry --version
+
+      - run: poetry install --no-interaction --no-root
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+
+      - run: poetry install --no-interaction
+
+      - name: Install DVC
+        uses: iterative/setup-dvc@v1
+      
+      - name: Configure Dagshub
+        run: |
+          poetry run dvc remote modify origin endpointurl https://dagshub.com/JanHuntersi/strava_prediction.s3
+          poetry run dvc remote modify origin --local access_key_id $DVC_ACCESS_KEY_ID
+          poetry run dvc remote modify origin --local secret_access_key $DVC_SECRET_ACCESS_KEY
+
+      - name: DVC Pull Data
+        run: |
+          poetry run dvc pull -r origin
+      
+      - name: Fetch weather data
+        run: |
+          poetry run python src/data/fetch_weather.py
+          if [ $? -eq 0 ]; then
+            echo "fetch_weather.py executed successfully."
+          else
+            echo "Error executing fetch_weather.py"
+            exit 1
+          fi
+      
+      - name: Add data to DVC
+        run: |
+          poetry run dvc add data
+      
+      - name: DVC push
+        run: |
+          poetry run dvc push -r origin
+      
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          branch: main
+          commit_message: "action: Fetching weather" 
+
+      - name: Get commit SHA and store it in GITHUB_OUTPUT
+        id: sha_new
+        run: echo "SHA_NEW=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+
+  process_weather_data:
+    needs: fetch_weather_data
+    runs-on: ubuntu-20.04
+    timeout-minutes: 20
+    outputs:
+      sha_new: ${{ steps.sha_new.outputs.SHA_NEW }}
+
+
+    permissions:
+      contents: write
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        env:
+          SHA_NEW: ${{ needs.fetch_weather_data.outputs.sha_new }}
+        with:
+          ref: ${{ needs.fetch_weather_data.outputs.sha_new }}
+          fetch-depth: 0
+
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pypoetry
+          key: ${{ runner.os }}-poetry-${{ hashFiles('**/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-poetry-
+      
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.10.2
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          poetry --version
+
+      - run: poetry install --no-interaction --no-root
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+
+      - run: poetry install --no-interaction
+
+      - name: Install DVC
+        uses: iterative/setup-dvc@v1
+      
+      - name: Configure Dagshub
+        run: |
+          poetry run dvc remote modify origin endpointurl https://dagshub.com/JanHuntersi/strava_prediction.s3
+          poetry run dvc remote modify origin --local access_key_id $DVC_ACCESS_KEY_ID
+          poetry run dvc remote modify origin --local secret_access_key $DVC_SECRET_ACCESS_KEY
+
+      - name: DVC Pull Data
+        run: |
+          poetry run dvc pull -r origin
+      
+
+      - name: Preprocess weather
+        run: |
+          poetry run python src/data/preprocess_weather.py
+          if [ $? -eq 0 ]; then
+            echo "preprocess_weather.py executed successfully."
+          else
+            echo "Error executing preprocess_weather.py"
+            exit 1
+          fi
+      
+      - name: Add data to DVC
+        run: |
+          poetry run dvc add data
+      
+      - name: DVC push
+        run: |
+          poetry run dvc push -r origin
+      
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          branch: main
+          commit_message: "action: preprocess weather data"
+
+      - name: Get commit SHA and store it in GITHUB_OUTPUT
+        id: sha_new
+        run: echo "SHA_NEW=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+    
+  merge_data:
+    needs: process_weather_data
+    runs-on: ubuntu-20.04
+    timeout-minutes: 20
+    outputs:
+      sha_new: ${{ steps.sha_new.outputs.SHA_NEW }}
+
+    permissions:
+      contents: write
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        env:
+          SHA_NEW: ${{ needs.process_weather_data.outputs.sha_new }}
+        with:
+          ref: ${{ needs.process_weather_data.outputs.sha_new }}
+          fetch-depth: 0
+
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pypoetry
+          key: ${{ runner.os }}-poetry-${{ hashFiles('**/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-poetry-
+      
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.10.2
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          poetry --version
+
+      - run: poetry install --no-interaction --no-root
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+
+      - run: poetry install --no-interaction
+
+      - name: Install DVC
+        uses: iterative/setup-dvc@v1
+      
+      - name: Configure Dagshub
+        run: |
+          poetry run dvc remote modify origin endpointurl https://dagshub.com/JanHuntersi/strava_prediction.s3
+          poetry run dvc remote modify origin --local access_key_id $DVC_ACCESS_KEY_ID
+          poetry run dvc remote modify origin --local secret_access_key $DVC_SECRET_ACCESS_KEY
+
+      - name: DVC Pull Data
+        run: |
+          poetry run dvc pull -r origin
+      
+      - name: Merge data
+        run: |
+          poetry run python src/data/merge_data.py
+          if [ $? -eq 0 ]; then
+            echo "merge_data.py executed successfully."
+          else
+            echo "Error executing merge_data.py"
+            exit 1
+          fi
+      
+      - name: Add data to DVC
+        run: |
+          poetry run dvc add data
+      
+      - name: DVC push
+        run: |
+          poetry run dvc push -r origin
+      
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          branch: main
+          commit_message: "action: merge data"
+      
+      - name: Get commit SHA and store it in GITHUB_OUTPUT
+        id: sha_new
+        run: echo "SHA_NEW=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
