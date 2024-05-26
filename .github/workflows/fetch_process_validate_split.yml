@@ -466,7 +466,7 @@ jobs:
         id: sha_new
         run: echo "SHA_NEW=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
-validate_data:
+  validate_data:
     needs: merge_data
     runs-on: ubuntu-20.04
     timeout-minutes: 20
