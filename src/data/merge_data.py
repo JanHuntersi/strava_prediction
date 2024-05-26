@@ -1,4 +1,4 @@
-from definitions import PATH_TO_PREPROCESS_STRAVA, PATH_TO_PREPROCESS_WEATHER, PATH_TO_PROCESSED_IS_ACTIVE
+from definitions import PATH_TO_PREPROCESS_STRAVA, PATH_TO_PREPROCESS_WEATHER, PATH_TO_PROCESSED_IS_ACTIVE,PATH_TO_KUDOS_DATASET
 import math
 import pandas as pd
 from datetime import timedelta
@@ -43,10 +43,12 @@ def merge_data():
     strava_data = pd.read_csv(PATH_TO_PREPROCESS_STRAVA)
     weather_data = pd.read_csv(PATH_TO_PREPROCESS_WEATHER)
 
+    if strava_data.empty or weather_data.empty:
+        print("No data to merge, exiting")
+        return
+
 
     weather_data['date'] = pd.to_datetime(weather_data['date'])
-
-    strava_data = preprocess_strava(strava_data)
 
     # merge the two dataframes
     weather_data['is_active'] = False
@@ -55,7 +57,28 @@ def merge_data():
         
     # SAVE TO PROCESSED DATA
 
+    print("Merged completed. Saving data to processed folder")
     weather_data.to_csv(PATH_TO_PROCESSED_IS_ACTIVE, index=False)
+
+    print("Data saved")
+
+    #Process data for kudos_dataset
+
+    last_five_activities = strava_data.tail(5)
+
+    kudos_dataset = pd.read_csv(PATH_TO_KUDOS_DATASET)
+
+    #if activiities not in kudos dataset then add them
+
+    for index, row in last_five_activities.iterrows():
+        if row['id'] not in kudos_dataset['id'].values:
+            print("Adding activity to kudos dataset")
+            kudos_dataset = kudos_dataset._append(row)
+
+    kudos_dataset.to_csv(PATH_TO_KUDOS_DATASET, index=False)
+    print("Kudos dataset updated")
+
+
 
 
 if __name__ == "__main__":
