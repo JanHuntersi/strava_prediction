@@ -465,3 +465,266 @@ jobs:
       - name: Get commit SHA and store it in GITHUB_OUTPUT
         id: sha_new
         run: echo "SHA_NEW=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+validate_data:
+    needs: merge_data
+    runs-on: ubuntu-20.04
+    timeout-minutes: 20
+    outputs:
+      sha_new: ${{ steps.sha_new.outputs.SHA_NEW }}
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        env:
+          SHA_NEW: ${{ needs.merge_data.outputs.sha_new }}
+        with:
+          ref: ${{ needs.merge_data.outputs.sha_new }}
+          fetch-depth: 0
+        
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pypoetry
+          key: ${{ runner.os }}-poetry-${{ hashFiles('**/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-poetry-
+      
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.10.2
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          poetry --version
+
+      - run: poetry install --no-interaction --no-root
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+
+      - run: poetry install --no-interaction
+
+      - name: Install DVC
+        uses: iterative/setup-dvc@v1
+      
+      - name: Configure Dagshub
+        run: |
+          poetry run dvc remote modify origin endpointurl https://dagshub.com/JanHuntersi/strava_prediction.s3
+          poetry run dvc remote modify origin --local access_key_id $DVC_ACCESS_KEY_ID
+          poetry run dvc remote modify origin --local secret_access_key $DVC_SECRET_ACCESS_KEY
+
+      - name: DVC Pull Data
+        run: |
+          poetry run dvc pull -r origin
+      
+      - name: Update current data
+        run: |
+          cp data/processed/is_active.csv data/current_reference/is_active_current.csv
+          cp data/processed/kudos_dataset.csv data/current_reference/kudos_current.csv
+ 
+
+      - name: Validate data
+        run: |
+          poetry run python src/data/validate_data.py
+          if [ $? -eq 0 ]; then
+            echo "validate_data.py executed successfully."
+          else
+            echo "Error executing validate_data.py"
+            exit 1
+          fi
+      - name: Deploy validation output to Netlify
+        uses: nwtgck/actions-netlify@v1.2
+        with:
+          publish-dir: "gx/uncommitted/data_docs/local_site"
+          production-deploy: true
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+      
+      - name: Get commit SHA and store it in GITHUB_OUTPUT
+        id: sha_new
+        run: echo "SHA_NEW=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+  test_data:
+    needs: validate_data
+    runs-on: ubuntu-20.04
+    timeout-minutes: 20
+    outputs:
+      sha_new: ${{ steps.sha_new.outputs.SHA_NEW }}
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        env:
+          SHA_NEW: ${{ needs.validate_data.outputs.sha_new }}
+        with:
+          ref: ${{ needs.validate_data.outputs.sha_new }}
+          fetch-depth: 0
+        
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pypoetry
+          key: ${{ runner.os }}-poetry-${{ hashFiles('**/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-poetry-
+      
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.10.2
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          poetry --version
+
+      - run: poetry install --no-interaction --no-root
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+
+      - run: poetry install --no-interaction
+
+      - name: Install DVC
+        uses: iterative/setup-dvc@v1
+
+      - name: Configure Dagshub
+        run: |
+          poetry run dvc remote modify origin endpointurl https://dagshub.com/JanHuntersi/strava_prediction.s3
+          poetry run dvc remote modify origin --local access_key_id $DVC_ACCESS_KEY_ID
+          poetry run dvc remote modify origin --local secret_access_key $DVC_SECRET_ACCESS_KEY
+
+      - name: DVC Pull Data
+        run: |
+          poetry run dvc pull -r origin
+      
+      - name: Update current data
+        run: |
+          cp data/processed/is_active.csv data/current_reference/is_active_current.csv
+          cp data/processed/kudos_dataset.csv data/current_reference/kudos_current.csv
+
+      - name: Check length of reference data
+        run: |
+          poetry run python src/models/check_length.py
+          if [ $? -eq 0 ]; then
+            echo "check_length.py executed successfully."
+          else
+            echo "Error executing check_length.py"
+            exit 1
+          fi
+
+      - name: Test data
+        run: |
+          poetry run python src/data/evidently_test.py
+          if [ $? -eq 0 ]; then
+            echo "evidently_test.py executed successfully."
+          else
+            echo "Error executing evidently_test.py"
+            exit 1
+          fi
+      - name: Update reference data
+        run: |
+          cp data/current_reference/is_active_current.csv data/current_reference/is_active_reference.csv
+          cp data/current_reference/kudos_current.csv data/current_reference/kudos_reference.csv
+      
+      - name: Add data to DVC
+        run: |
+          poetry run dvc add data
+      
+      - name: DVC push
+        run: |
+          poetry run dvc push -r origin
+
+
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          branch: main
+          commit_message: "action: test data"
+      
+      - name: Get commit SHA and store it in GITHUB_OUTPUT
+        id: sha_new
+        run: echo "SHA_NEW=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+  split_data:
+    needs: test_data
+    runs-on: ubuntu-20.04
+    timeout-minutes: 20
+    outputs:
+      sha_new: ${{ steps.sha_new.outputs.SHA_NEW }}
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        env:
+          SHA_NEW: ${{ needs.test_data.outputs.sha_new }}
+        with:
+          ref: ${{ needs.test_data.outputs.sha_new }}
+          fetch-depth: 0
+
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pypoetry
+          key: ${{ runner.os }}-poetry-${{ hashFiles('**/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-poetry-
+      
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.10.2
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          poetry --version
+
+      - run: poetry install --no-interaction --no-root
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+
+      - run: poetry install --no-interaction
+
+      - name: Install DVC
+        uses: iterative/setup-dvc@v1
+      
+      - name: Configure Dagshub
+        run: |
+          poetry run dvc remote modify origin endpointurl https://dagshub.com/JanHuntersi/strava_prediction.s3
+          poetry run dvc remote modify origin --local access_key_id $DVC_ACCESS_KEY_ID
+          poetry run dvc remote modify origin --local secret_access_key $DVC_SECRET_ACCESS_KEY
+
+      - name: DVC Pull Data
+        run: |
+          poetry run dvc pull -r origin
+      
+      - name: Split data
+        run: |
+          poetry run python src/data/split_data.py
+          if [ $? -eq 0 ]; then
+            echo "split_data.py executed successfully."
+          else
+            echo "Error executing split_data.py"
+            exit 1
+          fi
+      
+      - name: Add data to DVC
+        run: |
+          poetry run dvc add data
+      
+      - name: DVC push
+        run: |
+          poetry run dvc push -r origin
+      
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          branch: main
+          commit_message: "action: split data"
