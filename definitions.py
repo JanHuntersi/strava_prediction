@@ -15,3 +15,4 @@ PATH_TO_RAW_WEATHER = os.path.join(ROOT_DIR, "data", "raw", "weather.csv")
 
 PATH_TO_PROCESSED_IS_ACTIVE = os.path.join(ROOT_DIR, "data", "processed", "is_active.csv")
 
+PATH_TO_KUDOS_DATASET = os.path.join(ROOT_DIR, "data", "processed", "kudos_dataset.csv")
