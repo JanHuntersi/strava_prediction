@@ -1,7 +1,26 @@
 import json
 import csv
 from datetime import datetime, timedelta
-from definitions import PATH_TO_RAW_STRAVA, PATH_TO_PREPROCESS_STRAVA
+from definitions import PATH_TO_RAW_STRAVA, PATH_TO_PREPROCESS_STRAVA, ROOT_DIR
+import math
+import pandas as pd
+import os
+
+def update_date(df):
+
+    # round start_date_local and for end_time down 
+    df['start_date_local'] = pd.to_datetime(df['start_date_local'])
+
+    df['start_date_local'] = df['start_date_local'].dt.floor('h')
+
+    df['end_time'] = pd.to_datetime(df['end_time'])
+    df['end_time'] = df['end_time'].dt.floor('h')
+
+    # calculate duration in hours by elapsed time and round it upwards
+    df['duration'] = df['elapsed_time'] / 3600 
+    df['duration'] = df['duration'].apply(lambda x: math.ceil(x))
+    
+    return df
 
 def add_end_date_time(row):
     start_time = row[6]  # Assuming 'start_date_local' is at index 6
@@ -50,10 +69,15 @@ def preprocess_strava():
 
     csv_data.reverse()
 
+    csv_data = update_date(pd.DataFrame(csv_data, columns=columns))
 
-    with open(PATH_TO_PREPROCESS_STRAVA, "a", newline='',encoding='utf-8') as f:
-        writer = csv.writer(f)
-        writer.writerows(csv_data)
+    #if data exists, append to it
+    if os.path.exists(PATH_TO_PREPROCESS_STRAVA):
+        csv_data.to_csv(PATH_TO_PREPROCESS_STRAVA, mode='a', header=False, index=False)
+    else:
+        print("strava_data.csv doesnt exist creating new")
+        csv_data.to_csv(PATH_TO_PREPROCESS_STRAVA, index=False)
+
 
 
 if __name__ == "__main__":
