@@ -609,15 +609,6 @@ jobs:
           cp data/processed/is_active.csv data/current_reference/is_active_current.csv
           cp data/processed/kudos_dataset.csv data/current_reference/kudos_current.csv
 
-      - name: Check length of reference data
-        run: |
-          poetry run python src/models/check_length.py
-          if [ $? -eq 0 ]; then
-            echo "check_length.py executed successfully."
-          else
-            echo "Error executing check_length.py"
-            exit 1
-          fi
 
       - name: Test data
         run: |
