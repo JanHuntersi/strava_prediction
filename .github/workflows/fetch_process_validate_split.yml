@@ -1,4 +1,4 @@
-name: Fetch and process data every hour
+name: Fetch and process data every day
 
 on:
   schedule:
