@@ -19,13 +19,13 @@ def split_data():
     kudos_test = kudos.drop(kudos_train.index)
 
     # save the data
-    is_active_train.to_csv(os.path.join(os.path.dirname(PATH_TO_TEST_TRAIN), "is_active_train.csv"), index=False)
-    is_active_test.to_csv(os.path.join(os.path.dirname(PATH_TO_TEST_TRAIN), "is_active_test.csv"), index=False)
+    is_active_train.to_csv(os.path.join(PATH_TO_TEST_TRAIN, "is_active_train.csv"), index=False)
+    is_active_test.to_csv(os.path.join(PATH_TO_TEST_TRAIN, "is_active_test.csv"), index=False)
 
-    kudos_train.to_csv(os.path.join(os.path.dirname(PATH_TO_TEST_TRAIN), "kudos_train.csv"), index=False)
-    kudos_test.to_csv(os.path.join(os.path.dirname(PATH_TO_TEST_TRAIN), "kudos_test.csv"), index=False)
+    kudos_train.to_csv(os.path.join(PATH_TO_TEST_TRAIN, "kudos_train.csv"), index=False)
+    kudos_test.to_csv(os.path.join(PATH_TO_TEST_TRAIN, "kudos_test.csv"), index=False)
 
-    print("Data split completed. Saved to processed folder")
+    print("Data split completed. Saved to test_train folder")
 
 
 if __name__ == "__main__":
