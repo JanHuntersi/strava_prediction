@@ -1,6 +1,6 @@
 /data
 /other
-/reports
+
 
 # Virtual environments
 venv/
@@ -11,6 +11,7 @@ env/
 __pycache__/
 *.py[cod]
 *$py.class
+src/__pycache__
 
 # System files
 .DS_Store
