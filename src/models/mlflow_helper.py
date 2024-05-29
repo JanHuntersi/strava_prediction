@@ -107,7 +107,8 @@ class MlflowHelper:
         return model, pipeline
     
     def update_to_production(self, model_name):
-        pipeline_name= model_name.replace("model","pipeline")
+        model_name=f"model={model_name}"
+        pipeline_name=f"pipeline={model_name}"
         try:
             # Get model and scaler latest staging version
             model_version = self.client.get_latest_versions(name=model_name, stages=["staging"])[0].version
