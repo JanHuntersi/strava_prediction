@@ -26,3 +26,14 @@ def update_token(new_collection):
         collection.insert_one(new_collection)
     except Exception as e:
         print(f"Error updating token: {e}")
+
+def save_production_metrics(collection_name, metrics):
+    client = get_client()
+    try:
+        print(f"Trying to save {collection_name}  to mongodb")
+        db = client.get_database(settings.strava_db_name)
+        collection = db.get_collection(collection_name)
+        collection.insert_one(metrics)
+        print(f"{collection_name} saved to mongodb successfully!")
+    except Exception as e:
+        print(f"Error saving production metrics: {e}")
