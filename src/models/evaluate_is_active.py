@@ -80,7 +80,7 @@ def evaluate_is_active():
         # compare the metrics
         if acc_staging > acc_production:
             print("Staging model is better than production model... replacing production model with staging model")
-            mlflow_helper.update_to_production("is_active_model")
+            mlflow_helper.update_to_production("is_active_model", "is_active_pipeline")
 
             #Save to mongodb
             metrics = {

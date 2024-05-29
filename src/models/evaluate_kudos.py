@@ -69,7 +69,7 @@ def evaluate_kudos():
         # compare the metrics
         if mae_staging < mae_production:
             print("Staging model is better than production model... replacing production model with staging model")
-            mlflow_helper.update_to_production("kudos_model")
+            mlflow_helper.update_to_production("kudos_model", "kudos_pipeline")
 
             #Save to mongodb
             metrics = {
