@@ -22,3 +22,5 @@ PATH_TO_TEST_TRAIN = os.path.join(ROOT_DIR, "data", "test_train")
 PATH_TO_CURRENT_REFERENCE = os.path.join(ROOT_DIR, "data", "current_reference")
 
 PATH_TO_REPORTS_EVIDENTLY = os.path.join(ROOT_DIR, "reports", "evidently")
+
+PATH_TO_REPORTS = os.path.join(ROOT_DIR, "reports")
