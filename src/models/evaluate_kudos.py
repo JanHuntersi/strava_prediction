@@ -7,6 +7,7 @@ from datetime import datetime
 from definitions import PATH_TO_REPORTS
 import onnxruntime
 import numpy as np
+import os
 
 
 def evaluate_kudos():
@@ -77,13 +78,19 @@ def evaluate_kudos():
                 "mse_production": mse_production,
                 "evs_production": evs_production
             }
-            save_production_metrics("production_metrics", metrics)
+            save_production_metrics("kudos_production_metrics", metrics)
 
         print("Evaluation completed!")
         print("Saving metrics to to report..")
 
     # Save the metrics to the report
-    with open(PATH_TO_REPORTS + "kudos_model_train.txt", "w") as f:
+    path_to_file = os.path.join(PATH_TO_REPORTS, "kudos_report.txt")
+    #create the file if it does not exist
+    if not os.path.exists(path_to_file):
+        with open(path_to_file, "x") as f:
+            f.write("")
+
+    with open(path_to_file, "w") as f:
         f.write(f"Staging model: MAE={mae_staging}, MSE={mse_staging}, EVS={evs_staging}\n")
         f.write(f"Production model: MAE={mae_production}, MSE={mse_production}, EVS={evs_production}\n")
     mlflow.end_run()

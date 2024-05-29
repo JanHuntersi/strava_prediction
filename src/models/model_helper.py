@@ -276,7 +276,9 @@ class ModelHelper:
         #Convert is_active to binary
         train_data['is_active'] = train_data['is_active'].astype(int)
         test_data['is_active'] = test_data['is_active'].astype(int)
-        print("After conversion: ", train_data['is_active'].value_counts())
+
+        print("Train data 0 and 1: ", train_data['is_active'].value_counts())
+        print("Test data 0 and 1: ", test_data['is_active'].value_counts())
 
 
         """
@@ -355,9 +357,6 @@ class ModelHelper:
 
         return model
 
-        
-
-
     def create_and_compile_quantisized_model(self, input_shape, num_classes):
         model = Sequential()
         model.add(GRU(units=32, return_sequences=True, input_shape=input_shape))
@@ -369,3 +368,21 @@ class ModelHelper:
         model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
         return model
+
+
+    def create_dataset_with_steps(self,time_series, look_back=1, step=1):
+        X, y = [], []
+        for i in range(0, len(time_series) - look_back, step):
+            X.append(time_series[i:(i + look_back), :])
+            y.append(time_series[i + look_back, 0])
+        return np.array(X), np.array(y)
+
+    def reshape_for_model(self,train_df):
+        look_back = 8
+        step = 1
+        X_train, y_train = self.create_dataset_with_steps(train_df, look_back, step)
+        
+        # Pravilno oblikovanje X_train (samples, look_back, features)
+        X_train = np.reshape(X_train, (X_train.shape[0], look_back, train_df.shape[1]))
+        
+        return X_train, y_train
