@@ -7,7 +7,7 @@ readme = "README.md"
 packages = [{ include = "src" }]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "3.10.2"
 scikit-learn = "^1.0.2"
 flask = "^2.1.5"
 jupyter = "^1.0.0"
@@ -26,6 +26,21 @@ dvc = "^3.51.0"
 dvc-s3 = "^3.2.0"
 great-expectations = "^0.18.13"
 evidently = "^0.4.25"
+skl2onnx = "^1.16.0"
+mlflow = "^2.12.1"
+dagshub = "^0.3.26"
+onnxruntime = "^1.17.3"
+tensorflow = {version = "^2.13.0" }
+# https://github.com/tensorflow/tensorflow/blob/adb39b04e9cb116df4659a7e2de9eea27e62f25c/tensorflow/tools/pip_package/setup.py#L107-L108
+# https://github.com/python-poetry/poetry/issues/8271#issuecomment-1697740447
+tensorflow-io-gcs-filesystem = [
+    { version = ">= 0.23.1", markers = "platform_machine!='arm64' or platform_system!='Darwin'" },
+    { version = "< 0.32.0", markers = "platform_system == 'Windows'" }
+]
+keras = {version = "^2.13.0" }
+tf2onnx = "^1.16.1"
+tensorflow-model-optimization = "^0.8.0"
+tf-keras = "^2.13.0"
 
 
 [build-system]
