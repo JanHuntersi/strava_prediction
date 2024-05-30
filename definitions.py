@@ -24,3 +24,5 @@ PATH_TO_CURRENT_REFERENCE = os.path.join(ROOT_DIR, "data", "current_reference")
 PATH_TO_REPORTS_EVIDENTLY = os.path.join(ROOT_DIR, "reports", "evidently")
 
 PATH_TO_REPORTS = os.path.join(ROOT_DIR, "reports")
+
+PATH_TO_KUDOS_FULL_DATASET = os.path.join(ROOT_DIR, "data", "processed", "kudos_full_dataset.csv")
