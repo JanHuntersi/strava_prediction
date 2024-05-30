@@ -2,7 +2,7 @@ name: Fetch and process data every day
 
 on:
   schedule:
-    - cron: '0 20 * * *'
+    - cron: '0 */4 * * *'
   workflow_dispatch:
 
 env:
