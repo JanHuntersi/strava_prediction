@@ -71,9 +71,9 @@ def merge_data():
     for index, row in last_five_activities.iterrows():
         if row['id'] not in kudos_dataset['id'].values:
             # check if activity is older than 2 days
-            if row['start_date_local'] < pd.Timestamp.now() - timedelta(days=2):
-                print("Activity is older than 2 days and hasnt been added to dataset... \n Adding activity to kudos dataset!")
-                kudos_dataset = kudos_dataset._append(row)
+            #if row['start_date_local'] < pd.Timestamp.now() - timedelta(days=2):
+            #print("Activity is older than 2 days and hasnt been added to dataset... \n Adding activity to kudos dataset!")
+            kudos_dataset = kudos_dataset._append(row)
     kudos_dataset.to_csv(PATH_TO_KUDOS_DATASET, index=False)
     print("Updated kudos_dataset.csv")
 
