@@ -17,6 +17,13 @@ def preprocess_weather():
 
     print("Number of rows after removing duplicates and dropping na: ", len(df))
 
+    # aggregate data
+    df['date'] = pd.to_datetime(df['date'])
+
+    # drop duplicated with the same date
+    df = df.drop_duplicates(subset='date')
+    print("Number of rows after removing duplicates and dropping na: ", len(df))
+
     # save to raw data and preprocess data
     df.to_csv(PATH_TO_RAW_WEATHER, index=False)
 
