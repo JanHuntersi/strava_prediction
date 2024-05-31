@@ -5,7 +5,6 @@ import pandas as pd
 from definitions import PATH_TO_CURRENT_REFERENCE
 
 def validate_is_active(has_failed):
-
     data_context = great_expectations.get_context()
 
     print("Validating data for is_active.csv")
@@ -17,8 +16,14 @@ def validate_is_active(has_failed):
     )
 
     if not validate_data["success"]:
-        has_failed=True
+        has_failed = True
         print("Validation for is_active failed!")
+        print("Errors:")
+        for validation_result in validate_data["run_results"].values():
+            for result in validation_result["validation_result"]["results"]:
+                if not result["success"]:
+                    print(result["expectation_config"]["kwargs"])
+                    print(result["result"])
     else:
         print("Validation for is_active succeeded!")
     
