@@ -536,7 +536,19 @@ jobs:
             echo "Error executing validate_data.py"
             exit 1
           fi
+      - name: Check if validation report exists
+        id: check-report
+        run: |
+          if [ -d "gx/uncommitted/data_docs/local_site" ]; then
+            echo "Report directory exists."
+            echo "report-exists=true" >> $GITHUB_ENV
+          else
+            echo "Report directory does not exist."
+            echo "report-exists=false" >> $GITHUB_ENV
+          fi
+
       - name: Deploy validation output to Netlify
+        if: env.report-exists == 'true'
         uses: nwtgck/actions-netlify@v1.2
         with:
           publish-dir: "gx/uncommitted/data_docs/local_site"
