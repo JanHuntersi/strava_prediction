@@ -1,9 +1,21 @@
 from definitions import PATH_TO_PREPROCESS_STRAVA, PATH_TO_PREPROCESS_WEATHER, PATH_TO_PROCESSED_IS_ACTIVE,PATH_TO_KUDOS_DATASET, PATH_TO_KUDOS_FULL_DATASET
 import math
 import pandas as pd
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 
+def compare_dates(date1, date2):
+    date1 = pd.to_datetime(date1)
+    date2 = pd.to_datetime(date2)
 
+    date1 = datetime.strptime(date1, '%Y-%m-%d')
+    date2 = datetime.strptime(date2, '%Y-%m-%d')
+
+    difference = abs((date1 - date2).days)
+
+    if difference >= 2:
+        return True
+    else:
+        return False
 
 def preprocess_strava(df):
 
@@ -65,15 +77,21 @@ def merge_data():
     #Process data for kudos_dataset and full_dataset
     last_five_activities = strava_data.tail(10)
 
+    #time now ljubljana
+    now = datetime.now(timezone.utc)	
+    day = timedelta(days=1)
+    yesterday = now - day
+    print("Yesterday: ", yesterday)
 
     #KUDOS DATASET only contains activities that are older than 2 days
     kudos_dataset = pd.read_csv(PATH_TO_KUDOS_DATASET)
     for index, row in last_five_activities.iterrows():
         if row['id'] not in kudos_dataset['id'].values:
-            # check if activity is older than 2 days
-            #if row['start_date_local'] < pd.Timestamp.now() - timedelta(days=2):
-            #print("Activity is older than 2 days and hasnt been added to dataset... \n Adding activity to kudos dataset!")
-            kudos_dataset = kudos_dataset._append(row)
+            # check if the differnece between start_date_local and today is greater or equal to 2 days
+            row['start_date_local'] = pd.to_datetime(row['start_date_local'])
+            if row['start_date_local'] <= yesterday:
+                print("Activity is older than 1 days and hasnt been added to dataset... \n Adding activity to kudos dataset!")
+                kudos_dataset = kudos_dataset._append(row)
     kudos_dataset.to_csv(PATH_TO_KUDOS_DATASET, index=False)
     print("Updated kudos_dataset.csv")
 
@@ -85,7 +103,7 @@ def merge_data():
         if row['id'] not in kudos_full_dataset['id'].values:
             print("Adding activity to kudos_full_dataset")
             kudos_full_dataset = kudos_full_dataset._append(row)
-    kudos_full_dataset.to_csv(PATH_TO_KUDOS_DATASET, index=False)
+    kudos_full_dataset.to_csv(PATH_TO_KUDOS_FULL_DATASET, index=False)
     print("Updated kudus_full_dataset.csv")
 
 
