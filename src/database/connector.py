@@ -37,3 +37,23 @@ def save_production_metrics(collection_name, metrics):
         print(f"{collection_name} saved to mongodb successfully!")
     except Exception as e:
         print(f"Error saving production metrics: {e}")
+
+def save_predictions(collection_name, predictions):
+    client = get_client()
+    try:
+        print(f"Trying to save {collection_name}  to mongodb")
+        db = client.get_database(settings.strava_db_name)
+        collection = db.get_collection(collection_name)
+
+        # add updated_at timestamp
+        predictions["updated_at"] = datetime.now()
+
+        # update or  insert document
+        collection.update_one(
+            {'kudos_id': predictions['kudos_id']},
+            {"$set": predictions},
+            upsert=True
+        )
+        print(f"{collection_name} saved to mongodb successfully!")
+    except Exception as e:
+        print(f"Error saving predictions: {e}")

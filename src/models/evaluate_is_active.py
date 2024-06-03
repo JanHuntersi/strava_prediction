@@ -64,8 +64,16 @@ def evaluate_is_active():
         staging_model_predictions = model_staging.run(["output"], {"input": X_test})[0]
         production_model_predictions = model_production.run(["output"], {"input": X_test})[0]
 
+        print("Actual vs Staging Predictions vs Production Predictions:")
+        for actual, staging_pred, production_pred in zip(y_test, staging_model_predictions, production_model_predictions):
+            print(f"Actual: {actual}, Staging Prediction: {staging_pred}, Production Prediction: {production_pred}")
+        
+
         print("Staging model predictions shape:", staging_model_predictions.shape)
         print("Production model predictions shape:", production_model_predictions.shape)
+
+        print("Staging model predictions:", staging_model_predictions)
+        print("Production model predictions:", production_model_predictions)
 
         #convert to binary
         staging_model_predictions = np.where(staging_model_predictions >= 0.5, 1, 0)

@@ -27,7 +27,7 @@ def predict_activities():
         print("No data after now")
         return
 
-    num_predictions = 3
+    num_predictions = 6
 
     if data_after_now.shape[0] < num_predictions:
         print(f"Less than {num_predictions} predictions available. Only {data_after_now.shape[0]} ")
@@ -44,20 +44,17 @@ def predict_activities():
             # append i row from date_after_now to data_until_now
             print(f"Prediction {i}: {prediction[0][0]}")
 
+            bool_val = False
+            if prediction[0][0] > 0.5:
+                bool_val = True
+
+
             # set prediction to is_active
-            data_after_now.iloc[i, data_after_now.columns.get_loc("is_active")] = prediction[0][0]
+            data_after_now.iloc[i]['is_active'] = bool_val
 
             # Concatenate the current row with the historical data
             data_until_now = pd.concat([data_until_now, data_after_now.iloc[[i]]], ignore_index=True)
 
-            # Print the last 4 rows for debugging
-            print("LAST 4 ROWS")
-            print(data_until_now.tail(4))
-
-            # Keep only the last 8 rows for the next prediction
-            if data_until_now.shape[0] > 8:
-                data_until_now = data_until_now.iloc[-8:]
-            
             # Check if there are any NaN values in the data
             if data_until_now.isna().any().any():
                 print("NaN values found in data_until_now:")
@@ -73,11 +70,3 @@ def predict_activities():
 if __name__ == "__main__":
     predict_activities()
 
-
-  
-
-
-    
-
-if __name__ == "__main__":
-    predict_activities()

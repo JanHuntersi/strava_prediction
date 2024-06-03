@@ -8,7 +8,7 @@ from sklearn.feature_selection import mutual_info_regression
 from sklearn.metrics import  explained_variance_score, mean_absolute_error, mean_squared_error
 import os
 from sklearn.tree import DecisionTreeRegressor
-from definitions import PATH_TO_TEST_TRAIN
+from definitions import PATH_TO_TEST_TRAIN,PATH_TO_PROCESSED_IS_ACTIVE
 import onnx
 from sklearn.base import  clone
 from tensorflow.keras.models import Sequential
@@ -91,6 +91,32 @@ class ModelHelper:
     def info_gain(self, X, y):
         info_gains = mutual_info_regression(X, y)
         return info_gains
+    
+    def prepare_data_kudos(self, pipeline, data):
+
+        # Fill missing values
+        data = self.fill_missing_values(data)
+
+        # Get day and hour
+        data = self.get_day_and_hour(data)
+
+        # Select features
+        data = data[selected_features_kudos + ['kudos_count']]
+
+        # Separate features and target
+        X, y = self.separate_features_target(data, 'kudos_count')
+
+        if pipeline is None:
+            pipeline = self.create_kudos_pipeline()
+
+        print("X_train shape before transformation: ", X.shape)
+
+        X_transformed = pipeline.fit_transform(X)
+
+        print(f"X_train shape: {X_transformed.shape}")
+
+
+        return X_transformed, y, pipeline
 
     def prepare_train_test_kudos(self, pipeline=None):
         print("Preparing data for training or testing")
@@ -242,6 +268,64 @@ class ModelHelper:
         # Odstranimo originalne 'day' in 'hour' stolpce
         df.drop(['day', 'hour'], axis=1, inplace=True)
         return df
+    
+    def prepare_data_processed(self,pipeline,processed_data):
+
+        #convert to date
+        processed_data['date'] = pd.to_datetime(processed_data['date'])
+
+        #print the columns with missing values
+        print(processed_data.isnull().sum())
+
+        #print categorical columns
+        print(processed_data.select_dtypes(include=['object']).columns)
+
+        #fill missing values
+        processed_data = self.fill_missing_values(processed_data)
+
+        # Get day and hour
+        processed_data = self.get_day_and_hour(processed_data,'date')
+
+        # Ustvarite novo značilko, ki označuje četrtino dneva, v kateri pade dana ura
+        processed_data['quarter_of_day'] = pd.cut(processed_data['hour'], bins=[0, 6, 12, 18, 24], labels=[1, 2, 3, 4], include_lowest=True)
+
+        # ustvarite znacilko za del dneva med 0,8,16,24
+        processed_data['time_of_day'] = pd.cut(processed_data['hour'], bins=[0, 8, 16, 24], labels=[1, 2, 3], include_lowest=True)
+
+        #convert to sin and cos
+        processed_data = self.convert_to_sin_cos(processed_data)
+
+        #Convert is_active to binary
+        processed_data['is_active'] = processed_data['is_active'].astype(int)
+
+        print("Processed data 0 and 1: ", processed_data['is_active'].value_counts())
+
+        if pipeline is None:
+            pipeline = self.create_is_active_pipeline()
+        
+        print("X_train shape before transformation: ", processed_data.shape)
+
+        norm_processed_data = pipeline.fit_transform(processed_data)
+
+        # Convert NumPy arrays back to DataFrames
+        processed_df = pd.DataFrame(norm_processed_data, columns=columns_to_normalize_is_active)
+
+        #Merge non normalized columns with normalized columns
+        selected_non_normalized = ['day_sin','day_cos', 'hour_sin','hour_cos','is_day','quarter_of_day','time_of_day']
+
+        processed_df[selected_non_normalized] = processed_data[selected_non_normalized]
+
+        # final features list with y as the last column
+        final_features_list = ['quarter_of_day', 'day_sin', 'precipitation_probability', 'time_of_day', 'hour_sin', 'day_cos', 'relative_humidity_2m', 'hour_cos', 'rain', 'precipitation', 'apparent_temperature', 'temperature_2m']
+
+        data = processed_df[final_features_list]
+
+        # Separate features and target
+        y = processed_data['is_active']
+
+        # return X and y
+        return data, y
+        
 
     def prepare_train_test_active(self, pipeline=None):
         
