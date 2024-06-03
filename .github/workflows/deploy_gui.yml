@@ -11,11 +11,9 @@ on:
 env:
    REGISTRY: ghcr.io
    IMAGE_NAME: ${{ github.repository }}
-
    PROJECT_ID: iis
    SERVICE_ID: iis-client
    CREDENTIALS_ID: iis-registry
-
    DVC_ACCESS_KEY_ID: ${{ secrets.DVC_ACCESS_KEY_ID }}
    DVC_SECRET_ACCESS_KEY: ${{ secrets.DVC_SECRET_ACCESS_KEY }}
 
@@ -53,9 +51,6 @@ jobs:
                push: true
                tags: ${{ steps.meta.outputs.tags }}
                labels: ${{ steps.meta.outputs.labels }}
-
-          
-
           - name: Deploy to Northflank
             uses: northflank/deploy-to-northflank@v1
             with:
