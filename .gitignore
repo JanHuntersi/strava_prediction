@@ -7,6 +7,12 @@ venv/
 env/
 *.env
 
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+src/__pycache__
+
 # System files
 .DS_Store
 Thumbs.db
@@ -21,5 +27,21 @@ Thumbs.db
 # Node modules
 node_modules/
 
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+
+# all __pycache__ directories
+**/__pycache__/
+
+*.py[cod]
+*$py.class
+
+
+#cache files
+.cache/
+```
+#cache sqlite
+*.sqlite
 
 /reports/*.txt
