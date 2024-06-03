@@ -12,7 +12,7 @@ from datetime import datetime
 
 WINDOW_SIZE = 8
 
-def kudos_prediction(data):
+def kudos_prediction(data, models_dict):
 
     mlflow_helper = MlflowHelper()
     mhelper = ModelHelper(mlflow_helper)
@@ -20,7 +20,7 @@ def kudos_prediction(data):
     print("getting model and pipeline...")
 
     # Load the production model and pipeline from MLflow
-    model, pipeline = mlflow_helper.get_model_pipeline("kudos_model", "kudos_pipeline", "production")
+    model, pipeline = models_dict["kudos_model"], models_dict["kudos_pipeline"]
 
     #prepare data
     X_predict, Y_predict, pipeline = mhelper.prepare_data_kudos(pipeline,data)
@@ -39,7 +39,7 @@ def kudos_prediction(data):
 
 
 
-def activity_prediction(data):
+def activity_prediction(data, models_dict):
 
     mlflow_helper = MlflowHelper()
     mhelper = ModelHelper(mlflow_helper)
@@ -47,7 +47,7 @@ def activity_prediction(data):
     print("getting model and pipeline...")
 
     # Load the production model and pipeline from MLflow
-    model, pipeline = mlflow_helper.get_model_pipeline("is_active_model", "is_active_pipeline", "production")
+    model, pipeline = models_dict["is_active_model"], models_dict["is_active_pipeline"]
 
     print("Preparing data")
 
@@ -86,7 +86,7 @@ def activity_prediction(data):
 
     
 
-def predict_activities():
+def predict_activities(models_dict):
     # Load the processed data
     data = pd.read_csv(PATH_TO_PROCESSED_IS_ACTIVE)
     print("testset")
@@ -122,7 +122,7 @@ def predict_activities():
     for i in range(num_predictions):
         try:
             print(f"Predicting {i}")
-            prediction = activity_prediction(data_until_now.copy())
+            prediction = activity_prediction(data_until_now.copy(),models_dict)
             predictions.append(int(prediction[0][0]))
 
             # append i row from date_after_now to data_until_now
@@ -158,14 +158,14 @@ def predict_activities():
     return predictions, prediction_object
 
 
-def predict_last_kudos():
+def predict_last_kudos(models_dict):
     #read processed kudos
     data = pd.read_csv(PATH_TO_KUDOS_DATASET)
 
     #only last row with header
     data = data.tail(1)
 
-    pred = kudos_prediction(data)
+    pred = kudos_prediction(data, models_dict)
 
     # Convert start_date_local to datetime or string
     start_date_local = data['start_date_local'].iloc[0]
