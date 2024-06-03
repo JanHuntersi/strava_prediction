@@ -1,10 +1,14 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
 from src.models.predict import activity_prediction, predict_activities, predict_last_kudos
-from src.database.connector import save_predictions
+from src.database.connector import save_kudos_predictions,save_activities_predictions
 import os
 app = Flask(__name__)
 CORS(app)
+
+
+def download_models():
+    return True
 
 # Function to ensure Git repository is updated
 def pull_git_repo():
@@ -48,7 +52,7 @@ def make_kudos_prediction():
     print("Prediction object: ", prediction_object)
 
     # add prediction to MongoDB
-    save_predictions("kudos_predictions", prediction_object)
+    save_kudos_predictions("kudos_predictions", prediction_object)
 
     return jsonify("prediction: ", kudos_pred)
 
@@ -59,10 +63,12 @@ def predicted_kudos():
 @app.route('/activities')
 def activities():
     print("Predicting activities...")
-    predictions = predict_activities()
+    predictions, prediction_object = predict_activities()
 
+    print("Prediction object is:", prediction_object)
 
     # add predictions to MongoDB
+    save_activities_predictions("activities_predictions", prediction_object)
 
     print("my Predictions:", predictions)
 

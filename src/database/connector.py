@@ -38,7 +38,7 @@ def save_production_metrics(collection_name, metrics):
     except Exception as e:
         print(f"Error saving production metrics: {e}")
 
-def save_predictions(collection_name, predictions):
+def save_kudos_predictions(collection_name, predictions):
     client = get_client()
     try:
         print(f"Trying to save {collection_name}  to mongodb")
@@ -54,6 +54,17 @@ def save_predictions(collection_name, predictions):
             {"$set": predictions},
             upsert=True
         )
+        print(f"{collection_name} saved to mongodb successfully!")
+    except Exception as e:
+        print(f"Error saving predictions: {e}")
+
+def save_activities_predictions(collection_name, predictions):
+    client = get_client()
+    try:
+        print(f"Trying to save {collection_name}  to mongodb")
+        db = client.get_database(settings.strava_db_name)
+        collection = db.get_collection(collection_name)
+        collection.insert_one(predictions)
         print(f"{collection_name} saved to mongodb successfully!")
     except Exception as e:
         print(f"Error saving predictions: {e}")

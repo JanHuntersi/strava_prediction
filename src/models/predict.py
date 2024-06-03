@@ -117,6 +117,7 @@ def predict_activities():
         num_predictions = data_after_now.shape[0]
 
     predictions = []
+    prediction_object = {"predictions": []}
 
     for i in range(num_predictions):
         try:
@@ -135,6 +136,12 @@ def predict_activities():
             # set prediction to is_active
             data_after_now.iloc[i]['is_active'] = bool_val
 
+    # append prediction, and time to prediction object
+            prediction_object["predictions"].append({
+                "prediction": bool_val,
+                "date": data_after_now.iloc[i]['date']
+            })
+
             # Concatenate the current row with the historical data
             data_until_now = pd.concat([data_until_now, data_after_now.iloc[[i]]], ignore_index=True)
 
@@ -148,7 +155,7 @@ def predict_activities():
             print(f"Error in prediction {i}: {e}")
             return
     
-    return predictions
+    return predictions, prediction_object
 
 
 def predict_last_kudos():
