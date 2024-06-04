@@ -21,7 +21,9 @@ def evaluate_kudos():
     mlflow.set_experiment(experiment_name)
 
     with mlflow.start_run(run_name="kudos_test"):
-
+        # autolog
+        mlflow.sklearn.autolog()
+        
         # Load the staging model and pipeline from MLflow
         model_staging, pipeline_staging = mlflow_helper.get_model_pipeline("kudos_model", "kudos_pipeline", "staging")
         
@@ -79,6 +81,18 @@ def evaluate_kudos():
                 "evs_production": evs_production
             }
             save_production_metrics("kudos_production_metrics", metrics)
+
+            #save metrics to mlflow
+            mlflow.log_metric("mae", mae_production)
+            mlflow.log_metric("mse", mse_production)
+            mlflow.log_metric("evs", evs_production)
+
+        else:
+            # save staging metrics to mlflow
+            mlflow.log_metric("mae", mae_staging)
+            mlflow.log_metric("mse", mse_staging)
+            mlflow.log_metric("evs", evs_staging)
+
 
         print("Evaluation completed!")
         print("Saving metrics to to report..")

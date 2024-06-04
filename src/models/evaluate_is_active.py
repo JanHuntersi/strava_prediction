@@ -20,6 +20,8 @@ def evaluate_is_active():
     mlflow.set_experiment(experiment_name)
 
     with mlflow.start_run(run_name="is_active_test"):
+                #autolog
+        mlflow.tensorflow.autolog()
 
         # Load the staging model and pipeline from MLflow
         model_staging, pipeline_staging = mlflow_helper.get_model_pipeline("is_active_model", "is_active_pipeline", "staging")
@@ -99,6 +101,18 @@ def evaluate_is_active():
                 "f1_production": f1_production
             }
             save_production_metrics("is_active_production_metrics", metrics)
+
+            #save metrics to mlflow
+            mlflow.log_metric("accuracy", acc_production)
+            mlflow.log_metric("precision", prec_production)
+            mlflow.log_metric("recall", rec_production)
+            mlflow.log_metric("f1", f1_production)
+    
+        else:   
+            mlflow.log_metric("accuracy", acc_staging)
+            mlflow.log_metric("precision", prec_staging)
+            mlflow.log_metric("recall", rec_staging)
+            mlflow.log_metric("f1", f1_staging)
 
         print("Evaluation completed!")
         print("Saving metrics to to report..")
