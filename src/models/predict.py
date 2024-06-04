@@ -6,7 +6,7 @@ import onnxruntime
 from src.models.model_helper import ModelHelper
 from src.models.mlflow_helper import MlflowHelper
 from src.data.fetch_weather import get_forecast_data
-from definitions import PATH_TO_KUDOS_DATASET, PATH_TO_PROCESSED_IS_ACTIVE
+from definitions import PATH_TO_KUDOS_DATASET, PATH_TO_PROCESSED_IS_ACTIVE,PATH_TO_KUDOS_FULL_DATASET
 from datetime import datetime
 
 
@@ -136,10 +136,20 @@ def predict_activities(models_dict):
             # set prediction to is_active
             data_after_now.iloc[i]['is_active'] = bool_val
 
+            # weather data
+            #apparent_temperature,precipitation_probability,precipitation,rain,
+            weather={ 
+                "rain": data_after_now.iloc[i]['rain'],
+                "apparent_temperature": data_after_now.iloc[i]['apparent_temperature'],
+                "precipitation": data_after_now.iloc[i]['precipitation'],
+            }
+
+
     # append prediction, and time to prediction object
             prediction_object["predictions"].append({
                 "prediction": bool_val,
-                "date": data_after_now.iloc[i]['date']
+                "date": data_after_now.iloc[i]['date'],
+                "weather": weather
             })
 
             # Concatenate the current row with the historical data
@@ -160,7 +170,7 @@ def predict_activities(models_dict):
 
 def predict_last_kudos(models_dict):
     #read processed kudos
-    data = pd.read_csv(PATH_TO_KUDOS_DATASET)
+    data = pd.read_csv(PATH_TO_KUDOS_FULL_DATASET)
 
     #only last row with header
     data = data.tail(1)
