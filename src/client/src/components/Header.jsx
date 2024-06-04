@@ -1,5 +1,9 @@
 import React from "react";
 import adminIcon from "../../assets/admin.png";
+import dataIcon from "../../assets/data.png";
+import homepageIcon from "../../assets/homepage.png";
+import activityIcon from "../../assets/activity.png";
+import reportIcon from "../../assets/report.png";
 import { useNavigate } from "react-router-dom";
 
 const Header = () => {
@@ -9,52 +13,93 @@ const Header = () => {
 			style={{
 				backgroundColor: "var(--primary-color)",
 				display: "flex",
-				justifyContent: "center",
-				alignItems: "center",
+				flexDirection: "column",
 				textAlign: "center",
-				height: "8%",
+				width: "20px",
+				height: "100vh",
 				color: "white",
-				width: "100%",
-				fontSize: "1.5rem",
+				width: "275px",
+				fontSize: "1.3rem",
 				fontFamily: "var(--font-family)",
 				position: "relative", // Relative positioning for the parent
+				paddingTop: "25px",
 			}}
 		>
 			<div
 				onClick={() => {
 					navigate("/");
 				}}
-				style={{
-					position: "absolute",
-					left: "50%",
-					transform: "translateX(-50%)",
-					cursor: "pointer",
-				}}
+				className="logoContainer"
 			>
-				Strava Predictions
+				<img src={activityIcon} alt="activity" className="logo" />
+				ActivityChecker
 			</div>
 			<div
-				onClick={() => {
-					navigate("/admin");
-				}}
 				style={{
-					position: "absolute",
-					right: "40px",
+					width: "100%",
+					height: "1px",
+					backgroundColor: "white",
+					marginBlockStart: "1em",
+				}}
+			></div>
+			<div
+				style={{
 					display: "flex",
-					cursor: "pointer",
+					alignItems: "center",
+					justifyContent: "flex-start",
 				}}
 			>
-				<img
-					src={adminIcon}
-					alt="admin"
+				<div
 					style={{
-						width: "30px",
-						height: "30px",
-						color: "white",
-						marginRight: "5px",
+						display: "flex",
+						flexDirection: "column",
+						alignItems: "flex-start",
+						marginBlockStart: "2em",
+						marginInlineStart: "1em",
+						gap: "25px",
+						fontSize: "1rem",
 					}}
-				/>
-				Admin
+				>
+					<div
+						onClick={() => {
+							navigate("/");
+						}}
+						className="navItems"
+					>
+						<img src={homepageIcon} alt="data" className="iconStyle" />
+						Home
+					</div>
+
+					<div
+						onClick={() => {
+							navigate("/reports");
+						}}
+						className="navItems"
+					>
+						<img src={reportIcon} alt="reports" className="iconStyle" />
+						Reports
+					</div>
+
+					<div
+						onClick={() => {
+							navigate("/data");
+						}}
+						className="navItems"
+					>
+						<img src={dataIcon} alt="data" className="iconStyle" />
+						Data
+					</div>
+
+					<div
+						onClick={() => {
+							navigate("/admin");
+						}}
+						className="navItems"
+					>
+						<img src={adminIcon} alt="admin" className="iconStyle" />
+						Admin panel
+					</div>
+				</div>
 			</div>
 		</div>
 	);
