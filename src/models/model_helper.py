@@ -111,7 +111,7 @@ class ModelHelper:
 
         print("X_train shape before transformation: ", X.shape)
 
-        X_transformed = pipeline.fit_transform(X)
+        X_transformed = pipeline.transform(X)
 
         print(f"X_train shape: {X_transformed.shape}")
 

@@ -1,7 +1,7 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from src.models.mlflow_helper import MlflowHelper
-from src.models.predict import activity_prediction, predict_activities, predict_last_kudos
+from src.models.predict import activity_prediction, predict_activities, predict_last_kudos,predict_last_x_kudos
 from src.database.connector import save_kudos_predictions,save_activities_predictions
 import os
 
@@ -76,6 +76,14 @@ def make_kudos_prediction():
     save_kudos_predictions("kudos_predictions", prediction_object)
 
     return jsonify("prediction: ", kudos_pred)
+
+@app.route('/kudos/<int:number_predictions>')
+def make_x_kudos_prediction(number_predictions):
+    print(f"Trying to predict last {number_predictions} kudos")
+    all_data = predict_last_x_kudos(models_dict, number_predictions)
+    print("Kudos prediction: ",all_data)
+    
+    return jsonify("prediction: ", all_data)
 
 @app.route('/predicted/kudos')
 def predicted_kudos():

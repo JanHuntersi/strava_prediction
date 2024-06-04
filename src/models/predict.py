@@ -3,6 +3,7 @@ from datetime import timedelta
 import pandas as pd
 import numpy as np
 import onnxruntime
+from src.database.connector import save_kudos_predictions
 from src.models.model_helper import ModelHelper
 from src.models.mlflow_helper import MlflowHelper
 from src.data.fetch_weather import get_forecast_data
@@ -196,7 +197,56 @@ def predict_last_kudos(models_dict):
     print("Prediction object:", prediction_object)
 
     return pred, prediction_object
-    
+
+def predict_last_x_kudos(models_dict,num_predictions=5):
+   #read processed kudos
+    data = pd.read_csv(PATH_TO_KUDOS_FULL_DATASET)
+
+    #only last row with header
+    data = data.tail(num_predictions)
+
+    print(f"LAST {num_predictions} KUDOS ROWS",data.head())
+
+    all_data = []
+
+    for i in range(num_predictions):
+
+        data_pred = data.iloc[[i]]
+
+        print("Predicting kudos", i)
+        print("Data to predict", data_pred.head())
+
+        pred = kudos_prediction(data_pred, models_dict)
+
+        print("Prediction:", pred)
+
+        # Convert start_date_local to datetime or string
+        start_date_local = data_pred['start_date_local'].iloc[0]
+        if isinstance(start_date_local, pd.Timestamp):
+            start_date_local = start_date_local.to_pydatetime()
+        elif not isinstance(start_date_local, (datetime, str)):
+            start_date_local = str(start_date_local)
+
+        prediction_object = {
+            "kudos_prediction": int(pred),
+            "date": start_date_local,
+            "kudos_id": int(data_pred['id'].iloc[0]),
+            "activity_name": data_pred['name'].iloc[0],
+            "activity_type": data_pred['type'].iloc[0],
+            "is_evaluated": False,
+            "actual_value": int(data_pred['kudos_count'].iloc[0])
+        }
+
+        all_data.append(prediction_object)
+
+        # Prediction object
+        print("Prediction object:", prediction_object)
+        print("saving prediction to MongoDB")
+        save_kudos_predictions("kudos_predictions", prediction_object)
+
+
+    return all_data
+
 
 if __name__ == "__main__":
 
