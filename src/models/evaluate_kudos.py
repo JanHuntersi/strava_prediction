@@ -83,6 +83,16 @@ def evaluate_kudos():
         print("Evaluation completed!")
         print("Saving metrics to to report..")
 
+    metrics = {
+        'datetime': datetime.now(),
+        "mae_staging": mae_staging,
+        "mse_staging": mse_staging,
+        "evs_staging": evs_staging
+    }
+
+    #print save staging metrics
+    save_production_metrics("kudos_staging_metrics", metrics)
+
     # Save the metrics to the report
     path_to_file = os.path.join(PATH_TO_REPORTS, "kudos_report.txt")
     #create the file if it does not exist

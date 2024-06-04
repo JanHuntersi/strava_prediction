@@ -103,6 +103,17 @@ def evaluate_is_active():
         print("Evaluation completed!")
         print("Saving metrics to to report..")
 
+    print("Saving is_active_staging_metrics..")
+    #saving  staging metrics
+    metrics = {
+        'datetime': datetime.now(),
+        "accuracy_staging": acc_staging,
+        "precision_accuracy": prec_staging,
+        "recall_staging": rec_staging,
+        "f1_staging": f1_staging
+    }
+    save_production_metrics("is_active_staging_metrics", metrics)
+
     # Save the metrics to the report
 
     path_to_file = os.path.join(PATH_TO_REPORTS, "is_active_report.txt")
