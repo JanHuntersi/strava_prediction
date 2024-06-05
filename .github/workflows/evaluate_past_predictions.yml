@@ -65,7 +65,7 @@ jobs:
 
       - name: Evaluate past predictions
         run: |
-          poetry run python src/serve/evaluate_predictions.py
+          poetry run python src/models/evaluate_predictions.py
           if [ $? -eq 0 ]; then 
             echo "evaluate_predictions.py executed successfully."
           else
