@@ -36,7 +36,12 @@ def kudos_prediction(data, models_dict):
     print("Prediction shape:", prediction.shape)
     print("Prediction:", prediction)
 
-    return int(prediction[0][0])
+    #Convert the first prediction to an integer with rounding
+    rounded_prediction = int(np.round(prediction[0][0]))
+
+    print("Rounded prediction:", rounded_prediction)
+
+    return int(rounded_prediction)
 
 
 
