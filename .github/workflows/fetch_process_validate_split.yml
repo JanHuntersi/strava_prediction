@@ -631,6 +631,28 @@ jobs:
             echo "Error executing evidently_test.py"
             exit 1
           fi
+
+      - name: Check if evidently file exists
+        id: check-report
+        run: |
+          if [ -d "reports/evidently" ]; then
+            echo "Report directory exists."
+            echo "report-exists=true" >> $GITHUB_ENV
+          else
+            echo "Report directory does not exist."
+            echo "report-exists=false" >> $GITHUB_ENV
+          fi
+
+      - name: Deploy validation output to Netlify
+        if: env.report-exists == 'true'
+        uses: nwtgck/actions-netlify@v1.2
+        with:
+          publish-dir: "reports/evidently"
+          production-deploy: true
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SECOND_SITE_ID }}
+      
       - name: Update reference data
         run: |
           cp data/current_reference/is_active_current.csv data/current_reference/is_active_reference.csv
