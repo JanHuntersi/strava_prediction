@@ -27,9 +27,9 @@ def evaluate_kudos():
     mlflow_helper = MlflowHelper()
     experiment_name="kudos_evaluation"
 
-    mlflow_helper.set_experiment(experiment_name)
+    mlflow.set_experiment(experiment_name)
 
-    with mlflow_helper.start_run(run_name="kudos_eval"):
+    with mlflow.start_run(run_name="kudos_eval"):
 
 
         kudos_df = pd.read_csv(PATH_TO_KUDOS_FULL_DATASET)
@@ -102,9 +102,9 @@ def evaluate_is_active():
     mlflow_helper = MlflowHelper()
     experiment_name="is_active_evaluation"
 
-    mlflow_helper.set_experiment(experiment_name)
+    mlflow.set_experiment(experiment_name)
 
-    with mlflow_helper.start_run(run_name="is_active_eval"):
+    with mlflow.start_run(run_name="is_active_eval"):
 
         df = pd.read_csv(PATH_TO_PROCESSED_IS_ACTIVE)
         df = df.tail(48)
@@ -205,6 +205,9 @@ def evaluate_is_active():
         mlflow.log_metric("precision", precision)
         mlflow.log_metric("recall", recall)
         mlflow.log_metric("f1_score", f1_score)
+
+        # End the mlflow run
+        mlflow.end_run()
 
     print("Is_active evaluation done!")
 
