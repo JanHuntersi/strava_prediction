@@ -61,7 +61,7 @@ def main():
 
         data_drift(is_active_reference, is_active_current, "is_active_drift_report.html")
 
-        run_evidently_test(is_active_reference, is_active_current, "is_active_report.html","is_active_results.html")
+        run_evidently_test(is_active_reference, is_active_current, "is_active_report.html","index.html")
 
     else:
         print("Data length for is_active is the same between current and reference data .... skipping test")
