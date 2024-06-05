@@ -74,38 +74,40 @@ def merge_data():
 
     print("Data saved")
 
-    #Process data for kudos_dataset and full_dataset
     last_five_activities = strava_data.tail(10)
 
-    #time now ljubljana
-    now = datetime.now(timezone.utc)	
+    now = datetime.now(timezone.utc)
     day = timedelta(days=1)
     yesterday = now - day
     print("Yesterday: ", yesterday)
 
-    #KUDOS DATASET only contains activities that are older than 2 days
+    # Processing kudos dataset
     kudos_dataset = pd.read_csv(PATH_TO_KUDOS_DATASET)
     for index, row in last_five_activities.iterrows():
-        if row['id'] not in kudos_dataset['id'].values:
-            # check if the differnece between start_date_local and today is greater or equal to 2 days
+        row_id = row['id']
+        if row_id in kudos_dataset['id'].values:
+            kudos_dataset.loc[kudos_dataset['id'] == row_id, :] = row.values
+        else:
             row['start_date_local'] = pd.to_datetime(row['start_date_local'])
             if row['start_date_local'] <= yesterday:
-                print("Activity is older than 1 days and hasnt been added to dataset... \n Adding activity to kudos dataset!")
-                kudos_dataset = kudos_dataset._append(row)
-    kudos_dataset.to_csv(PATH_TO_KUDOS_DATASET, index=False)
+                print("Activity is older than 1 day and hasn't been added to dataset... \nAdding activity to kudos dataset!")
+                kudos_dataset = pd.concat([kudos_dataset, row.to_frame().T], ignore_index=True)
+
+    kudos_dataset.to_csv(PATH_TO_KUDOS_DATASET, header=True, index=False)
     print("Updated kudos_dataset.csv")
 
-
-    # PROCESSING FULL KUDOS DATASET
+    # Processing full kudos dataset
     kudos_full_dataset = pd.read_csv(PATH_TO_KUDOS_FULL_DATASET)
-    #if activiities not in kudos dataset then add them
     for index, row in last_five_activities.iterrows():
-        if row['id'] not in kudos_full_dataset['id'].values:
+        row_id = row['id']
+        if row_id in kudos_full_dataset['id'].values:
+            kudos_full_dataset.loc[kudos_full_dataset['id'] == row_id, :] = row.values
+        else:
             print("Adding activity to kudos_full_dataset")
-            kudos_full_dataset = kudos_full_dataset._append(row)
-    kudos_full_dataset.to_csv(PATH_TO_KUDOS_FULL_DATASET, index=False)
-    print("Updated kudus_full_dataset.csv")
+            kudos_full_dataset = pd.concat([kudos_full_dataset, row.to_frame().T], ignore_index=True)
 
+    kudos_full_dataset.to_csv(PATH_TO_KUDOS_FULL_DATASET, header=True, index=False)
+    print("Updated kudos_full_dataset.csv")
 
 
 

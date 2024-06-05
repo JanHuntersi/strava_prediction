@@ -1,25 +1,22 @@
-import json
-import csv
-from datetime import datetime, timedelta
-from definitions import PATH_TO_RAW_STRAVA, PATH_TO_PREPROCESS_STRAVA, ROOT_DIR
-import math
-import pandas as pd
 import os
+import json
+import pandas as pd
+import math
+from datetime import datetime, timedelta
+from definitions import PATH_TO_RAW_STRAVA, PATH_TO_PREPROCESS_STRAVA,PATH_TO_TEST
 
 def update_date(df):
-
-    # round start_date_local and for end_time down 
+    # Round start_date_local and end_time down 
     df['start_date_local'] = pd.to_datetime(df['start_date_local'])
-
     df['start_date_local'] = df['start_date_local'].dt.floor('h')
 
     df['end_time'] = pd.to_datetime(df['end_time'])
     df['end_time'] = df['end_time'].dt.floor('h')
 
-    # calculate duration in hours by elapsed time and round it upwards
+    # Calculate duration in hours by elapsed time and round it upwards
     df['duration'] = df['elapsed_time'] / 3600 
     df['duration'] = df['duration'].apply(lambda x: math.ceil(x))
-    
+
     return df
 
 def add_end_date_time(row):
@@ -52,7 +49,7 @@ def preprocess_strava():
     else:
         print(f"Activities found, preprocessing {len(data)} activities")
     
-    columns = ['id','type','name','distance','elapsed_time','moving_time','start_date_local','achievement_count','kudos_count','comment_count','athlete_count','photo_count',]
+    columns = ['id', 'type', 'name', 'distance', 'elapsed_time', 'moving_time', 'start_date_local', 'achievement_count', 'kudos_count', 'comment_count', 'athlete_count', 'photo_count']
 
     csv_data = []
 
@@ -67,16 +64,28 @@ def preprocess_strava():
     # Add 'end_time' to the column list
     columns.append('end_time')
 
-    csv_data.reverse()
+    # Convert csv_data to DataFrame
+    new_data_df = pd.DataFrame(csv_data, columns=columns)
+    new_data_df = update_date(new_data_df)
 
-    csv_data = update_date(pd.DataFrame(csv_data, columns=columns))
+    # Sort DataFrame by 'start_date_local'
+    new_data_df = new_data_df.sort_values(by='start_date_local')
 
-    #if data exists, append to it
+    # Read existing preprocessed Strava data if it exists
     if os.path.exists(PATH_TO_PREPROCESS_STRAVA):
-        csv_data.to_csv(PATH_TO_PREPROCESS_STRAVA, mode='a', header=False, index=False)
+        existing_data_df = pd.read_csv(PATH_TO_PREPROCESS_STRAVA)
+        existing_data_df = update_date(existing_data_df)
+
+        # Merge new data with existing data, updating kudos_count
+        merged_df = pd.concat([existing_data_df, new_data_df]).drop_duplicates(subset=['id'], keep='last')
     else:
-        print("strava_data.csv doesnt exist creating new")
-        csv_data.to_csv(PATH_TO_PREPROCESS_STRAVA, index=False)
+        print("strava_data.csv doesn't exist, creating new")
+        merged_df = new_data_df
+
+    # Save the merged DataFrame back to CSV
+
+
+    merged_df.to_csv(PATH_TO_PREPROCESS_STRAVA, index=False)
 
 
 

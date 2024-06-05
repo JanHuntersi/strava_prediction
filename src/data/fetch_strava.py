@@ -33,10 +33,12 @@ def get_activities_from_strava():
     # Pretvorimo v epohalni časovni žig
     epoch_timestamp = int(start_of_day.timestamp())
 
-    print(f"Fetching activities after {start_of_day} with epoch timestamp {epoch_timestamp}")
+    #print(f"Fetching activities after {start_of_day} with epoch timestamp {epoch_timestamp}")
+
+    print("Fetching last 10 activities")
 
     
-    req = requests.get(f"{STRAVA_ACTIVITY_URL}after={epoch_timestamp}", headers=headers)
+    req = requests.get(f"{STRAVA_ACTIVITY_URL}per_page=10", headers=headers)
     
     # Check if request was successful
     if req.status_code != 200:
