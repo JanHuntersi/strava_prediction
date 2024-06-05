@@ -69,6 +69,15 @@ const Header = () => {
 						<img src={homepageIcon} alt="data" className="iconStyle" />
 						Home
 					</div>
+					<div
+						onClick={() => {
+							navigate("/predictions");
+						}}
+						className="navItems"
+					>
+						<img src={homepageIcon} alt="data" className="iconStyle" />
+						Predictions
+					</div>
 
 					<div
 						onClick={() => {
@@ -78,16 +87,6 @@ const Header = () => {
 					>
 						<img src={reportIcon} alt="reports" className="iconStyle" />
 						Reports
-					</div>
-
-					<div
-						onClick={() => {
-							navigate("/data");
-						}}
-						className="navItems"
-					>
-						<img src={dataIcon} alt="data" className="iconStyle" />
-						Data
 					</div>
 
 					<div

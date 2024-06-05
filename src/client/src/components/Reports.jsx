@@ -7,7 +7,8 @@ export default function Reports() {
 		<div className="pageContainer">
 			<HeaderPageName pageName="Reports" />
 			<div className="pageContainer">
-				<IframeComponent />
+				<IframeComponent web_url="https://stravapredict.netlify.app/" />
+				<IframeComponent web_url="https://evidently-is-active.netlify.app/" />
 			</div>
 		</div>
 	);

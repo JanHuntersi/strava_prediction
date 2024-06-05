@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import isActiveIcon from "../../assets/is_active.png";
 import notActiveIcon from "../../assets/not_active.png";
 
@@ -18,6 +18,7 @@ export default function ActivitiesRow() {
 			}
 
 			const givenTime = new Date();
+			let tempTime = [];
 			for (let i = 1; i < 9; i++) {
 				givenTime.setMinutes(Math.round(givenTime.getMinutes() / 60) * 60);
 				const roundedTime = givenTime.toLocaleTimeString("en-US", {
@@ -26,11 +27,13 @@ export default function ActivitiesRow() {
 					hour12: false,
 				});
 				givenTime.setHours(givenTime.getHours() + 1);
-				setTime((time) => [...time, roundedTime]);
+				tempTime.push(roundedTime);
 			}
+			setTime(tempTime);
 
 			return response.json();
 		},
+		retry: 4,
 	});
 
 	const isActive = (activity) => {
@@ -46,7 +49,9 @@ export default function ActivitiesRow() {
 
 	if (error) return "An error has occurred: " + error.message;
 
-	console.log(data);
+	if (!data || !data.predictions) {
+		return "Error getting the data.";
+	}
 
 	return (
 		<>

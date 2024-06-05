@@ -2,9 +2,10 @@ import { useState } from "react";
 import "./App.css";
 import Header from "./components/Header";
 import { Routes, Route } from "react-router-dom";
-import Home from "./components/Home";
+import Predictions from "./components/Predictions";
 import Admin from "./components/Admin";
 import Reports from "./components/Reports";
+import Home from "./components/Home";
 
 function App() {
 	return (
@@ -23,6 +24,7 @@ function App() {
 					>
 						<Routes>
 							<Route path="/" element={<Home />} />
+							<Route path="/predictions" element={<Predictions />} />
 							<Route path="/admin" element={<Admin />} />
 							<Route path="/reports" element={<Reports />} />
 						</Routes>
