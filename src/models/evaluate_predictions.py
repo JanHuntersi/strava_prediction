@@ -5,6 +5,8 @@ import pandas as pd
 from datetime import datetime
 from src.models.mlflow_helper import MlflowHelper
 import mlflow
+from sklearn.metrics import mean_absolute_error, mean_squared_error, explained_variance_score
+from sklearn.metrics import precision_score, recall_score, f1_score
 
 def kudos_find_true_predict(predictions, kudos_full_dataset):
 
@@ -63,9 +65,9 @@ def evaluate_kudos():
 
         # Calculate the evaluation metric
         # For example, Mean Absolute Error (MAE)
-        mae = sum([abs(true - pred) for true, pred in zip(true_kudos_list, predicted_kudos_list)]) / len(true_kudos_list)
-        mse = sum([(true - pred)**2 for true, pred in zip(true_kudos_list, predicted_kudos_list)]) / len(true_kudos_list)
-        evs = 1 - (sum([(true - pred)**2 for true, pred in zip(true_kudos_list, predicted_kudos_list)]) / sum([(true - sum(true_kudos_list)/len(true_kudos_list))**2 for true in true_kudos_list]))
+        mae = mean_absolute_error(true_kudos_list, predicted_kudos_list)
+        mse = mean_squared_error(true_kudos_list, predicted_kudos_list)
+        evs = explained_variance_score(true_kudos_list, predicted_kudos_list)
         print(f"Mean Absolute Error: {mae}") 
         print(f"Mean Squared Error: {mse}")
         print(f"Explained Variance Score: {evs}")
@@ -185,26 +187,22 @@ def evaluate_is_active():
         print("Predicted Values:", predicted_values)
         print("Actual Values:", actual_values)
 
-        # Calculate the evaluation metric
-        # For example, Accuracy, Precision, Recall, F1 Score
-        correct_predictions = sum([1 for pred, actual in zip(predicted_values, actual_values) if pred == actual])
-
-        accuracy = correct_predictions / len(actual_values)
-
-        precision = sum([1 for pred, actual in zip(predicted_values, actual_values) if pred == actual and pred == 1]) / sum([1 for pred in predicted_values if pred == 1])
-        recall = sum([1 for pred, actual in zip(predicted_values, actual_values) if pred == actual and pred == 1]) / sum([1 for actual in actual_values if actual == 1])
-        f1_score = 2 * (precision * recall) / (precision + recall)
-
+        # Calculate evaluation metrics
+        accuracy = precision_score(actual_values, predicted_values)
+        precision = precision_score(actual_values, predicted_values)
+        recall = recall_score(actual_values, predicted_values)
+        calc_f1_score = f1_score(actual_values, predicted_values)
+        
         print(f"Accuracy: {accuracy}")
         print(f"Precision: {precision}")
         print(f"Recall: {recall}")
-        print(f"F1 Score: {f1_score}")
+        print(f"F1 Score: {calc_f1_score}")
 
         # Save the evaluation metric to mlflow
         mlflow.log_metric("accuracy", accuracy)
         mlflow.log_metric("precision", precision)
         mlflow.log_metric("recall", recall)
-        mlflow.log_metric("f1_score", f1_score)
+        mlflow.log_metric("f1_score", calc_f1_score)
 
         # End the mlflow run
         mlflow.end_run()
