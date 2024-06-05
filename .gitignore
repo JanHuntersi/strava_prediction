@@ -47,3 +47,5 @@ __pycache__/
 /reports/*.txt
 
 reports/evidently/
+
+/src/data/*.cache.sqlite
