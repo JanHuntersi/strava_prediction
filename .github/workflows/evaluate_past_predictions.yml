@@ -1,4 +1,4 @@
-name: Evaluate todays predictions
+name: Evaluate yesterdays predictions
 
 on: 
   schedule:
