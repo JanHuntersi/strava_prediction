@@ -4,7 +4,7 @@ from src.models.mlflow_helper import MlflowHelper
 from src.models.predict import activity_prediction, predict_activities, predict_last_kudos,predict_last_x_kudos
 from src.database.connector import save_kudos_predictions,save_activities_predictions
 import os
-
+from datetime import datetime
 
 models_dict={}
 
@@ -83,7 +83,7 @@ def make_x_kudos_prediction(number_predictions):
     all_data = predict_last_x_kudos(models_dict, number_predictions)
     print("Kudos prediction: ",all_data)
     
-    return jsonify("prediction: ", all_data)
+    return jsonify(all_data)
 
 @app.route('/predicted/kudos')
 def predicted_kudos():
@@ -95,6 +95,9 @@ def activities():
     predictions, prediction_object = predict_activities(models_dict)
 
     print("Prediction object is:", prediction_object)
+    
+    # add timestamp to the prediction
+    prediction_object["updated_at"] = datetime.now()
 
     # add predictions to MongoDB
     save_activities_predictions("activities_predictions", prediction_object)
