@@ -45,3 +45,5 @@ __pycache__/
 *.sqlite
 
 /reports/*.txt
+
+reports/evidently/
