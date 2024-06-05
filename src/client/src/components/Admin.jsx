@@ -10,7 +10,9 @@ export default function Admin() {
 	const { data, isLoading, error } = useQuery({
 		queryKey: ["metrics"],
 		queryFn: async () => {
-			const response = await fetch("http://127.0.0.1:5000/metrics");
+			const response = await fetch(
+				"https://p01--iis-api--q6nfcmmd42sk.code.run/metrics"
+			);
 			console.log(response);
 			if (!response.ok) {
 				throw new Error("Network response was not ok");
@@ -56,6 +58,7 @@ export default function Admin() {
 							fontSize: 22,
 							font: "Poppins",
 							fontWeight: 600,
+							marginTop: "20px",
 						}}
 					>
 						Data Evaluation

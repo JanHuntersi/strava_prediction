@@ -4,7 +4,9 @@ export default function Kudos() {
 	const { data, isLoading, error } = useQuery({
 		queryKey: ["kudos_predictions"],
 		queryFn: async () => {
-			const response = await fetch(`http://127.0.0.1:5000/kudos/4`);
+			const response = await fetch(
+				`https://p01--iis-api--q6nfcmmd42sk.code.run/kudos/4`
+			);
 			console.log(response);
 			if (!response.ok) {
 				throw new Error("Network response was not ok");

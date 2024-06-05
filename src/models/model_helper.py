@@ -48,6 +48,18 @@ class ModelHelper:
 
         return data
     
+    def create_and_compile_quantisized_model(self, input_shape, num_classes):
+        model = Sequential()
+        model.add(GRU(units=32, return_sequences=True, input_shape=input_shape))
+        model.add(GRU(units=32))
+        model.add(Dense(units=16, activation='relu'))
+        model.add(Dense(units=1, activation='sigmoid'))
+
+        # Kompilacija modela
+        model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+
+        return model
+    
     def get_day_and_hour(self, data, date_column='start_date_local'):
         data[date_column] = pd.to_datetime(data[date_column])
         data['day'] = data[date_column].dt.day
@@ -437,18 +449,6 @@ class ModelHelper:
         # Apply quantization with the specified quantization scope
         tmo.quantization.keras.quantize_apply(model, quantize_scope)
 
-        model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
-
-        return model
-
-    def create_and_compile_quantisized_model(self, input_shape, num_classes):
-        model = Sequential()
-        model.add(GRU(units=32, return_sequences=True, input_shape=input_shape))
-        model.add(GRU(units=32))
-        model.add(Dense(units=16, activation='relu'))
-        model.add(Dense(units=1, activation='sigmoid'))
-
-        # Kompilacija modela
         model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
         return model
