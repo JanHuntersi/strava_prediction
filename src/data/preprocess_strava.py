@@ -3,7 +3,7 @@ import json
 import pandas as pd
 import math
 from datetime import datetime, timedelta
-from definitions import PATH_TO_RAW_STRAVA, PATH_TO_PREPROCESS_STRAVA,PATH_TO_TEST
+from definitions import PATH_TO_RAW_STRAVA, PATH_TO_PREPROCESS_STRAVA
 
 def update_date(df):
     # Round start_date_local and end_time down 
