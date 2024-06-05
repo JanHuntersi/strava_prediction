@@ -5,8 +5,7 @@ import pandas as pd
 from datetime import datetime
 from src.models.mlflow_helper import MlflowHelper
 import mlflow
-from sklearn.metrics import mean_absolute_error, mean_squared_error, explained_variance_score
-from sklearn.metrics import precision_score, recall_score, f1_score
+from sklearn.metrics import accuracy_score, balanced_accuracy_score, cohen_kappa_score, matthews_corrcoef, mean_absolute_error, mean_squared_error, explained_variance_score
 
 def kudos_find_true_predict(predictions, kudos_full_dataset):
 
@@ -102,7 +101,7 @@ def evaluate_is_active():
     print("Trying to evaluate is_active predictions...")
 
     mlflow_helper = MlflowHelper()
-    experiment_name="is_active_evaluation"
+    experiment_name = "is_active_evaluation"
 
     mlflow.set_experiment(experiment_name)
 
@@ -130,7 +129,6 @@ def evaluate_is_active():
         # Iterate through each prediction in predictions
         for prediction in predictions:
             pred_list = prediction["predictions"]
-            
             # Extend the all_predictions list with the pred_list
             all_predictions.extend(pred_list)
 
@@ -151,13 +149,8 @@ def evaluate_is_active():
 
         print(df['date'])
 
-        #date1 = datetime.strptime(date1, '%Y-%m-%d')
-        #remove +00:00 from date
-        df['date'] = pd.to_datetime(df['date'])
-
-        #remove +00:00 from date
-        df['date'] = df['date'].dt.tz_localize(None)
-
+        # Remove +00:00 from date
+        df['date'] = pd.to_datetime(df['date']).dt.tz_localize(None)
 
         for prediction in df_predictions.to_dict('records'):
             date = prediction["date"]
@@ -188,21 +181,21 @@ def evaluate_is_active():
         print("Actual Values:", actual_values)
 
         # Calculate evaluation metrics
-        accuracy = precision_score(actual_values, predicted_values)
-        precision = precision_score(actual_values, predicted_values)
-        recall = recall_score(actual_values, predicted_values)
-        calc_f1_score = f1_score(actual_values, predicted_values)
-        
-        print(f"Accuracy: {accuracy}")
-        print(f"Precision: {precision}")
-        print(f"Recall: {recall}")
-        print(f"F1 Score: {calc_f1_score}")
+        accuracy = accuracy_score(actual_values, predicted_values)
+        balanced_accuracy = balanced_accuracy_score(actual_values, predicted_values)
+        mcc = matthews_corrcoef(actual_values, predicted_values)
+        cohen_kappa = cohen_kappa_score(actual_values, predicted_values)
 
-        # Save the evaluation metric to mlflow
+        print(f"Accuracy: {accuracy}")
+        print(f"Balanced Accuracy: {balanced_accuracy}")
+        print(f"MCC: {mcc}")
+        print(f"Cohen's Kappa: {cohen_kappa}")
+
+        # Log metrics to mlflow
         mlflow.log_metric("accuracy", accuracy)
-        mlflow.log_metric("precision", precision)
-        mlflow.log_metric("recall", recall)
-        mlflow.log_metric("f1_score", calc_f1_score)
+        mlflow.log_metric("balanced_accuracy", balanced_accuracy)
+        mlflow.log_metric("mcc", mcc)
+        mlflow.log_metric("cohen_kappa", cohen_kappa)
 
         # End the mlflow run
         mlflow.end_run()
