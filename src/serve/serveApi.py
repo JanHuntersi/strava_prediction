@@ -5,6 +5,7 @@ from src.models.predict import activity_prediction, predict_activities, predict_
 from src.database.connector import save_kudos_predictions,save_activities_predictions
 import os
 from datetime import datetime
+import mlflow
 
 models_dict={}
 
@@ -106,6 +107,63 @@ def activities():
 
     return_pred = {"predictions": predictions}
     return jsonify(return_pred) 
+
+
+def get_metrics_from_experiment(client,experiment_id,run_name):
+
+    filter_string = f"tag.mlflow.runName = '{run_name}'"
+    run = client.search_runs(experiment_ids=experiment_id, filter_string=filter_string, order_by=["attributes.start_time  DESC"])
+
+    print(f"Number of runs: {len(run)}")
+
+    metrics = []
+    for run in run:
+        metrics.append(run.data.metrics)
+
+    return metrics
+
+
+@app.route('/metrics')
+def get_metrics():
+    client = mlflow.MlflowClient()
+
+    print("Getting metrics...")
+    
+    """
+        "kudos_prediction": 1,
+        "is_active_prediction": 2,
+        "kudos_evaluation": 3,
+        "is_active_evaluation": 4,
+
+    """
+
+    try:
+
+        client = mlflow.tracking.MlflowClient()
+
+        kudos_train_metrics = get_metrics_from_experiment(client,1,"kudos_train")
+
+        kudos_prediction = get_metrics_from_experiment(client,3,"kudos_eval")
+
+        is_active_train_metrics = get_metrics_from_experiment(client,2,"is_active_train")
+
+        is_active_prediction = get_metrics_from_experiment(client,4,"is_active_eval")
+
+        return_object = {
+            "kudos_train_metrics": kudos_train_metrics,
+            "kudos_prediction": kudos_prediction,
+            "is_active_train_metrics": is_active_train_metrics,
+            "is_active_prediction": is_active_prediction
+        }
+
+        print(f"kudos_prediction metrics: {kudos_prediction}")
+
+        print("Metrics retrieved successfully")
+
+        return jsonify(return_object)
+    except Exception as e:
+        print(f"Error getting metrics: {e}")
+        return jsonify("Error getting metrics")
 
 
 def main():
